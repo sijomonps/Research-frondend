@@ -25,8 +25,9 @@ const alignment: Record<string, string> = {
 
 export function DataTable({ columns, rows, caption }: DataTableProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_10px_24px_rgba(91,11,22,0.08)]">
-      <table className="min-w-full text-sm">
+    <div className="rounded-2xl border border-[color:var(--border)] bg-white shadow-[0_10px_24px_rgba(91,11,22,0.08)]">
+      <div className="overflow-x-auto">
+        <table className="min-w-[640px] w-full text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead className="bg-[color:var(--muted)] text-xs uppercase tracking-wide text-slate-500">
           <tr>
@@ -54,7 +55,8 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

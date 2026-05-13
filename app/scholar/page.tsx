@@ -1,22 +1,13 @@
 import {
   CheckCircle,
-  ClipboardCheck,
   Clock,
   FileText,
-  LayoutDashboard,
-  User,
 } from "lucide-react";
 import { DashboardCards } from "@/components/DashboardCards";
 import { PageLayout } from "@/components/PageLayout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DataTable } from "@/components/Table";
-
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/scholar" },
-  { label: "My Submissions", icon: FileText, href: "/scholar" },
-  { label: "My Approvals", icon: ClipboardCheck, href: "/scholar" },
-  { label: "Profile", icon: User, href: "/scholar" },
-];
+import { scholarNav } from "@/data/roleNav";
 
 const metrics = [
   { label: "Total submissions", value: "8", icon: FileText },
@@ -68,7 +59,7 @@ export default function ScholarDashboard() {
       title="Scholar Dashboard"
       userName="Scholar User"
       roleLabel="Scholar"
-      navItems={navItems}
+      navItems={scholarNav}
       activeItem="Dashboard"
     >
       <DashboardCards items={metrics} />

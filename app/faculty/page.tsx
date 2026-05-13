@@ -1,24 +1,14 @@
 import {
   ClipboardCheck,
   FileText,
-  LayoutDashboard,
   NotebookText,
   Users,
-  User,
 } from "lucide-react";
 import { DashboardCards } from "@/components/DashboardCards";
 import { PageLayout } from "@/components/PageLayout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DataTable } from "@/components/Table";
-
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/faculty" },
-  { label: "Scholars", icon: Users, href: "/faculty" },
-  { label: "Submissions", icon: FileText, href: "/faculty" },
-  { label: "Approvals", icon: ClipboardCheck, href: "/faculty" },
-  { label: "Reports", icon: NotebookText, href: "/faculty" },
-  { label: "Profile", icon: User, href: "/faculty" },
-];
+import { facultyNav } from "@/data/roleNav";
 
 const metrics = [
   { label: "Total scholars", value: "12", icon: Users },
@@ -99,7 +89,7 @@ export default function FacultyDashboard() {
       title="Faculty Dashboard"
       userName="Dr. Emily Davis"
       roleLabel="Faculty Member"
-      navItems={navItems}
+      navItems={facultyNav}
       activeItem="Dashboard"
     >
       <DashboardCards items={metrics} />

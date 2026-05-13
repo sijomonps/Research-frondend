@@ -2,24 +2,13 @@ import {
   CheckCircle,
   ClipboardCheck,
   FileText,
-  LayoutDashboard,
-  NotebookText,
-  Settings,
   Users,
 } from "lucide-react";
 import { DashboardCards } from "@/components/DashboardCards";
 import { PageLayout } from "@/components/PageLayout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DataTable } from "@/components/Table";
-
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-  { label: "Users", icon: Users, href: "/admin" },
-  { label: "Submissions", icon: FileText, href: "/admin" },
-  { label: "Approvals", icon: ClipboardCheck, href: "/admin" },
-  { label: "Reports", icon: NotebookText, href: "/admin" },
-  { label: "Settings", icon: Settings, href: "/admin" },
-];
+import { adminNav } from "@/data/roleNav";
 
 const metrics = [
   { label: "Total users", value: "87", icon: Users },
@@ -72,7 +61,7 @@ export default function AdminDashboard() {
       title="Admin Dashboard"
       userName="Admin"
       roleLabel="Administrator"
-      navItems={navItems}
+      navItems={adminNav}
       activeItem="Dashboard"
     >
       <DashboardCards items={metrics} />

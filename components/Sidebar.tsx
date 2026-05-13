@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { BookOpen } from "lucide-react";
+import { BookOpen, LogOut } from "lucide-react";
 
 type NavItem = {
   label: string;
@@ -15,7 +15,7 @@ type SidebarProps = {
 
 export function Sidebar({ navItems, activeItem }: SidebarProps) {
   return (
-    <aside className="flex w-full flex-col gap-6 bg-gradient-to-b from-[color:var(--maroon-900)] to-[color:var(--maroon-700)] px-5 py-6 text-white lg:w-64">
+    <aside className="flex w-full flex-col gap-6 bg-gradient-to-b from-[color:var(--maroon-900)] to-[color:var(--maroon-700)] px-5 py-6 text-white lg:h-screen lg:w-64 lg:overflow-y-auto">
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
           <BookOpen className="h-5 w-5" />
@@ -48,8 +48,17 @@ export function Sidebar({ navItems, activeItem }: SidebarProps) {
           );
         })}
       </nav>
-      <div className="mt-auto rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-xs text-white/80">
-        Minimal academic workspace for research workflows and approvals.
+      <div className="mt-auto space-y-3">
+        <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-xs text-white/80">
+          Minimal academic workspace for research workflows and approvals.
+        </div>
+        <Link
+          href="/"
+          className="flex w-full items-center justify-start gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white/90 transition hover:bg-white/20"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Logout</span>
+        </Link>
       </div>
     </aside>
   );

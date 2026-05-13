@@ -3,20 +3,12 @@ import {
   FileText,
   LayoutDashboard,
   NotebookText,
-  User,
 } from "lucide-react";
 import { DashboardCards } from "@/components/DashboardCards";
 import { PageLayout } from "@/components/PageLayout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DataTable } from "@/components/Table";
-
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/coordinator" },
-  { label: "Submissions", icon: FileText, href: "/coordinator" },
-  { label: "Approvals", icon: ClipboardCheck, href: "/coordinator" },
-  { label: "Reports", icon: NotebookText, href: "/coordinator" },
-  { label: "Profile", icon: User, href: "/coordinator" },
-];
+import { coordinatorNav } from "@/data/roleNav";
 
 const metrics = [
   { label: "MCA submissions", value: "56", icon: FileText },
@@ -69,7 +61,7 @@ export default function CoordinatorDashboard() {
       title="Research Centre Coordinator"
       userName="Dr. Priya Sharma"
       roleLabel="Coordinator"
-      navItems={navItems}
+      navItems={coordinatorNav}
       activeItem="Dashboard"
     >
       <section className="rounded-2xl border border-[color:var(--border)] bg-white p-6 shadow-[0_14px_28px_rgba(91,11,22,0.08)]">
