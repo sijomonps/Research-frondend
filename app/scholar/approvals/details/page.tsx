@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Paperclip } from "lucide-react";
@@ -27,7 +27,7 @@ const formatDate = (value?: string) => {
   return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-export default function ScholarApprovalDetailsPage() {
+function ScholarApprovalDetailsContent() {
   const searchParams = useSearchParams();
   const submissionId = useMemo(() => searchParams.get("id") ?? "", [searchParams]);
   const [submission, setSubmission] = useState<Submission | null>(null);
@@ -109,5 +109,13 @@ export default function ScholarApprovalDetailsPage() {
         </div>
       </section>
     </PageLayout>
+  );
+}
+
+export default function ScholarApprovalDetailsPage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-slate-500">Loading...</p>}>
+      <ScholarApprovalDetailsContent />
+    </Suspense>
   );
 }

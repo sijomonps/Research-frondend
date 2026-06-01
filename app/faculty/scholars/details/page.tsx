@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -38,7 +38,7 @@ const formatDate = (value?: string) => {
   return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-export default function FacultyScholarDetailsPage() {
+function FacultyScholarDetailsContent() {
   const searchParams = useSearchParams();
   const scholarId = useMemo(() => searchParams.get("id") ?? "", [searchParams]);
   const [scholar, setScholar] = useState<Scholar | null>(null);
@@ -136,5 +136,13 @@ export default function FacultyScholarDetailsPage() {
         </div>
       </section>
     </PageLayout>
+  );
+}
+
+export default function FacultyScholarDetailsPage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-slate-500">Loading...</p>}>
+      <FacultyScholarDetailsContent />
+    </Suspense>
   );
 }

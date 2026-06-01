@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -30,7 +30,7 @@ const roleLabels: Record<string, string> = {
   research_guide: "Research Guide",
 };
 
-export default function AdminUserDetailsPage() {
+function AdminUserDetailsContent() {
   const searchParams = useSearchParams();
   const userId = useMemo(() => searchParams.get("id") ?? "", [searchParams]);
   const [user, setUser] = useState<User | null>(null);
@@ -121,5 +121,13 @@ export default function AdminUserDetailsPage() {
         </div>
       </section>
     </PageLayout>
+  );
+}
+
+export default function AdminUserDetailsPage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-slate-500">Loading...</p>}>
+      <AdminUserDetailsContent />
+    </Suspense>
   );
 }
