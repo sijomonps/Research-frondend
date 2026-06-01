@@ -26,25 +26,25 @@ export default function CoordinatorProfilePage() {
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="name">
               Full name
             </label>
-            <input id="name" defaultValue="Dr. Priya Sharma" className={inputClass} />
+            <input id="name" className={inputClass} />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="email">
               Email
             </label>
-            <input id="email" defaultValue="priya.sharma@college.edu" className={inputClass} />
+            <input id="email" className={inputClass} />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="department">
               Department
             </label>
-            <input id="department" defaultValue="MCA - Master of Computer Applications" className={inputClass} />
+            <input id="department" className={inputClass} />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="phone">
               Phone number
             </label>
-            <input id="phone" defaultValue="9876543210" className={inputClass} />
+            <input id="phone" className={inputClass} />
           </div>
           <div className="flex flex-wrap gap-3">
             <button

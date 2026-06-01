@@ -80,7 +80,7 @@ export default function ScholarApprovalsPage() {
         status: <StatusBadge status={submission.status} />,
         action: (
           <Link
-            href="/scholar/approvals/details"
+            href={`/scholar/approvals/details?id=${submission._id}`}
             className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--maroon-700)]"
           >
             View

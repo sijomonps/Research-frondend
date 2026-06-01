@@ -54,19 +54,20 @@ export default function AdminSettingsPage() {
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="systemName">
                 System name
               </label>
-              <input id="systemName" defaultValue="Research System" className={inputClass} />
+              <input id="systemName" className={inputClass} />
             </div>
             <div>
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="organization">
                 University / organization
               </label>
-              <input id="organization" defaultValue="Example University" className={inputClass} />
+              <input id="organization" className={inputClass} />
             </div>
             <div>
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="timezone">
                 Timezone
               </label>
-              <select id="timezone" className={inputClass} defaultValue="GMT+05:30">
+              <select id="timezone" className={inputClass} defaultValue="">
+                <option value="">Select timezone</option>
                 <option value="GMT+05:30">(GMT+05:30) India Standard Time</option>
                 <option value="GMT+00:00">(GMT+00:00) UTC</option>
                 <option value="GMT-05:00">(GMT-05:00) Eastern Time</option>
@@ -76,7 +77,7 @@ export default function AdminSettingsPage() {
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="dateFormat">
                 Date format
               </label>
-              <input id="dateFormat" defaultValue="dd/mm/yyyy" className={inputClass} />
+              <input id="dateFormat" className={inputClass} />
             </div>
             <button
               type="button"

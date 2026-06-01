@@ -80,7 +80,7 @@ export default function FacultySubmissionsPage() {
         status: <StatusBadge status={submission.status} />,
         action: (
           <Link
-            href="/faculty/submissions/details"
+            href={`/faculty/submissions/details/${submission._id}`}
             className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--maroon-700)]"
           >
             View

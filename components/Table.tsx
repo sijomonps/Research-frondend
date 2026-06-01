@@ -42,18 +42,29 @@ export function DataTable({ columns, rows, caption }: DataTableProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-[color:var(--border)]">
-          {rows.map((row) => (
-            <tr key={row.id} className="text-slate-700">
-              {columns.map((column) => (
-                <td
-                  key={`${row.id}-${column.key}`}
-                  className={`px-4 py-3 ${alignment[column.align ?? "left"]}`}
-                >
-                  {row[column.key]}
-                </td>
-              ))}
+          {rows.length > 0 ? (
+            rows.map((row) => (
+              <tr key={row.id} className="text-slate-700">
+                {columns.map((column) => (
+                  <td
+                    key={`${row.id}-${column.key}`}
+                    className={`px-4 py-3 ${alignment[column.align ?? "left"]}`}
+                  >
+                    {row[column.key]}
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td
+                colSpan={columns.length}
+                className="px-4 py-8 text-center text-sm text-slate-500"
+              >
+                No records available.
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
         </table>
       </div>

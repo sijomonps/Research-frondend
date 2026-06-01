@@ -7,7 +7,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { DataTable } from "@/components/Table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { scholarNav } from "@/data/roleNav";
-import { apiGet, type ApiListResponse } from "@/lib/api";
+import { apiDelete, apiGet, type ApiListResponse } from "@/lib/api";
 
 type Submission = {
   _id: string;
@@ -41,6 +41,23 @@ export default function ScholarSubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "Delete this submission? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setError(null);
+      await apiDelete(`/submissions/${id}`);
+      setSubmissions((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete submission";
+      setError(message);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -72,17 +89,33 @@ export default function ScholarSubmissionsPage() {
     () =>
       submissions.map((submission) => ({
         id: submission._id,
-        title: submission.title,
+        title: (
+          <Link
+            href={`/scholar/submissions/details/${submission._id}`}
+            className="font-semibold text-[color:var(--maroon-900)]"
+          >
+            {submission.title}
+          </Link>
+        ),
         department: submission.department,
         submitted: formatDate(submission.submittedAt),
         status: <StatusBadge status={submission.status} />,
         action: (
-          <Link
-            href="/scholar/submissions/details"
-            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--maroon-700)]"
-          >
-            View
-          </Link>
+          <div className="flex items-center justify-end gap-2">
+            <Link
+              href={`/scholar/submissions/edit/${submission._id}`}
+              className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--maroon-700)]"
+            >
+              Edit
+            </Link>
+            <button
+              type="button"
+              onClick={() => handleDelete(submission._id)}
+              className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600"
+            >
+              Delete
+            </button>
+          </div>
         ),
       })),
     [submissions]

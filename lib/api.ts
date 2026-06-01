@@ -76,6 +76,30 @@ export const apiPostJson = async <T>(
   return (await response.json()) as T;
 };
 
+export const apiPatchJson = async <T>(
+  path: string,
+  body: Record<string, unknown>,
+  init?: RequestInit
+): Promise<T> => {
+  const response = await fetch(buildUrl(path), {
+    ...init,
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const message = await readErrorMessage(response);
+    throw new Error(message || "Request failed");
+  }
+
+  return (await response.json()) as T;
+};
+
 export const apiPostForm = async <T>(path: string, body: FormData): Promise<T> => {
   const response = await fetch(buildUrl(path), {
     method: "POST",
@@ -83,6 +107,41 @@ export const apiPostForm = async <T>(path: string, body: FormData): Promise<T> =
       Accept: "application/json",
     },
     body,
+  });
+
+  if (!response.ok) {
+    const message = await readErrorMessage(response);
+    throw new Error(message || "Request failed");
+  }
+
+  return (await response.json()) as T;
+};
+
+export const apiPatchForm = async <T>(path: string, body: FormData): Promise<T> => {
+  const response = await fetch(buildUrl(path), {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+    },
+    body,
+  });
+
+  if (!response.ok) {
+    const message = await readErrorMessage(response);
+    throw new Error(message || "Request failed");
+  }
+
+  return (await response.json()) as T;
+};
+
+export const apiDelete = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const response = await fetch(buildUrl(path), {
+    ...init,
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      ...(init?.headers ?? {}),
+    },
   });
 
   if (!response.ok) {

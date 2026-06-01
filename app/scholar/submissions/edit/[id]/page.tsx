@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { scholarNav } from "@/data/roleNav";
-import { apiGet, apiPostForm, type ApiListResponse } from "@/lib/api";
+import {
+  apiGet,
+  apiPatchForm,
+  type ApiItemResponse,
+  type ApiListResponse,
+} from "@/lib/api";
 
 type Department = {
   _id: string;
@@ -17,16 +23,32 @@ type Scholar = {
   name: string;
 };
 
+type Submission = {
+  _id: string;
+  title: string;
+  abstract: string;
+  department: string;
+  scholar?: { _id?: string } | null;
+  file?: { originalName?: string } | null;
+};
+
 const inputClass =
   "mt-2 w-full rounded-xl border border-[color:var(--border)] bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--maroon-600)]";
 
-export default function ScholarNewSubmissionPage() {
+export default function ScholarEditSubmissionPage() {
+  const params = useParams();
+  const submissionId = useMemo(() => {
+    const id = params?.id;
+    return Array.isArray(id) ? id[0] : id;
+  }, [params]);
+
   const [departments, setDepartments] = useState<Department[]>([]);
   const [scholars, setScholars] = useState<Scholar[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [currentFileName, setCurrentFileName] = useState<string | null>(null);
   const [formState, setFormState] = useState({
     title: "",
     department: "",
@@ -36,27 +58,33 @@ export default function ScholarNewSubmissionPage() {
   });
 
   useEffect(() => {
+    if (!submissionId) return;
     let isMounted = true;
 
     const load = async () => {
       try {
         setLoading(true);
         setError(null);
-        const [departmentsRes, scholarsRes] = await Promise.all([
+        const [departmentsRes, scholarsRes, submissionRes] = await Promise.all([
           apiGet<ApiListResponse<Department>>("/departments"),
           apiGet<ApiListResponse<Scholar>>("/users?role=scholar"),
+          apiGet<ApiItemResponse<Submission>>(`/submissions/${submissionId}`),
         ]);
         if (!isMounted) return;
         setDepartments(departmentsRes.items);
         setScholars(scholarsRes.items);
-        // Auto-fill scholarId for now (placeholder until auth is added)
-        if (scholarsRes.items && scholarsRes.items.length > 0) {
-          setFormState((prev) => ({ ...prev, scholarId: scholarsRes.items[0]._id }));
-        }
+        setFormState({
+          title: submissionRes.item.title ?? "",
+          department: submissionRes.item.department ?? "",
+          scholarId: submissionRes.item.scholar?._id ?? "",
+          abstract: submissionRes.item.abstract ?? "",
+          file: null,
+        });
+        setCurrentFileName(submissionRes.item.file?.originalName ?? null);
       } catch (err) {
         if (!isMounted) return;
         const message =
-          err instanceof Error ? err.message : "Failed to load form data";
+          err instanceof Error ? err.message : "Failed to load submission";
         setError(message);
       } finally {
         if (isMounted) setLoading(false);
@@ -68,9 +96,11 @@ export default function ScholarNewSubmissionPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [submissionId]);
 
   const handleSubmit = async () => {
+    if (!submissionId) return;
+
     try {
       setSaving(true);
       setError(null);
@@ -96,18 +126,13 @@ export default function ScholarNewSubmissionPage() {
         payload.append("file", formState.file);
       }
 
-      await apiPostForm("/submissions", payload);
-      setSuccess("Submission created successfully.");
-      setFormState({
-        title: "",
-        department: "",
-        scholarId: "",
-        abstract: "",
-        file: null,
-      });
+      await apiPatchForm(`/submissions/${submissionId}`, payload);
+      setSuccess("Submission updated successfully.");
+      setCurrentFileName(formState.file?.name ?? currentFileName);
+      setFormState((prev) => ({ ...prev, file: null }));
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to submit research";
+        err instanceof Error ? err.message : "Failed to update submission";
       setError(message);
     } finally {
       setSaving(false);
@@ -116,7 +141,7 @@ export default function ScholarNewSubmissionPage() {
 
   return (
     <PageLayout
-      title="New Submission"
+      title="Edit Submission"
       userName="Scholar User"
       roleLabel="Scholar"
       navItems={scholarNav}
@@ -131,14 +156,17 @@ export default function ScholarNewSubmissionPage() {
           Back to My Submissions
         </Link>
         <h2 className="font-display text-lg text-[color:var(--maroon-900)]">
-          New submission
+          Edit submission
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Submit your research paper for review.
+          Update your research paper details.
         </p>
         <form className="mt-6 space-y-5">
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="title">
+            <label
+              className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+              htmlFor="title"
+            >
               Title
             </label>
             <input
@@ -153,7 +181,10 @@ export default function ScholarNewSubmissionPage() {
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="department">
+              <label
+                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                htmlFor="department"
+              >
                 Department
               </label>
               <select
@@ -178,7 +209,10 @@ export default function ScholarNewSubmissionPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="file">
+              <label
+                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                htmlFor="file"
+              >
                 File upload (PDF)
               </label>
               <input
@@ -192,20 +226,46 @@ export default function ScholarNewSubmissionPage() {
                   }))
                 }
               />
+              {currentFileName ? (
+                <p className="mt-2 text-xs text-slate-500">
+                  Current file: {currentFileName}
+                </p>
+              ) : null}
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <label
+              className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+              htmlFor="scholar"
+            >
               Scholar
             </label>
-            <div className={inputClass}>
-              {loading
-                ? "Loading..."
-                : scholars.find((s) => s._id === formState.scholarId)?.name ?? "Scholar"}
-            </div>
+            <select
+              id="scholar"
+              className={inputClass}
+              value={formState.scholarId}
+              onChange={(event) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  scholarId: event.target.value,
+                }))
+              }
+            >
+              <option value="" disabled>
+                Select scholar
+              </option>
+              {scholars.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="abstract">
+            <label
+              className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+              htmlFor="abstract"
+            >
               Abstract
             </label>
             <textarea
@@ -225,7 +285,7 @@ export default function ScholarNewSubmissionPage() {
               disabled={saving || loading}
               className="rounded-full bg-[color:var(--maroon-800)] px-6 py-2 text-xs font-semibold text-white shadow-sm"
             >
-              {saving ? "Submitting..." : "Submit"}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
             <Link
               href="/scholar/submissions"
@@ -235,7 +295,7 @@ export default function ScholarNewSubmissionPage() {
             </Link>
           </div>
           {loading ? (
-            <p className="text-xs text-slate-500">Loading form data...</p>
+            <p className="text-xs text-slate-500">Loading submission...</p>
           ) : null}
           {error ? <p className="text-xs text-red-600">{error}</p> : null}
           {success ? <p className="text-xs text-emerald-600">{success}</p> : null}

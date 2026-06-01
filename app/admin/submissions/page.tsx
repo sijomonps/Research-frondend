@@ -80,7 +80,7 @@ export default function AdminSubmissionsPage() {
         status: <StatusBadge status={submission.status} />,
         action: (
           <Link
-            href="/admin/submissions/details"
+            href={`/admin/submissions/details?id=${submission._id}`}
             className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--maroon-700)]"
           >
             Review

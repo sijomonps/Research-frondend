@@ -26,19 +26,19 @@ export default function FacultyProfilePage() {
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="name">
               Full name
             </label>
-            <input id="name" defaultValue="Dr. Emily Davis" className={inputClass} />
+            <input id="name" className={inputClass} />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="email">
               Email
             </label>
-            <input id="email" defaultValue="emily.davis@univ.edu" className={inputClass} />
+            <input id="email" className={inputClass} />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="department">
               Department
             </label>
-            <input id="department" defaultValue="Computer Science" className={inputClass} />
+            <input id="department" className={inputClass} />
           </div>
           <div className="flex flex-wrap gap-3">
             <button

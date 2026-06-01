@@ -1,26 +1,50 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { DataTable } from "@/components/Table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { adminNav } from "@/data/roleNav";
-import { apiGet, apiPostJson, type ApiListResponse } from "@/lib/api";
+import { apiDelete, apiGet, apiPostJson, type ApiListResponse } from "@/lib/api";
 
 type User = {
   _id: string;
   name: string;
   email: string;
   role: string;
+  roles?: string[];
   department?: string;
   status?: string;
+  researchCenter?: { _id?: string; name?: string; code?: string } | null;
+  guide?: { _id?: string; name?: string; email?: string } | null;
+};
+
+type ResearchCenter = {
+  _id: string;
+  name: string;
+  code?: string;
+};
+
+type Guide = {
+  _id: string;
+  name: string;
+  email?: string;
+  researchCenter?: { _id?: string; name?: string; code?: string } | null;
+};
+
+type Department = {
+  _id: string;
+  name: string;
 };
 
 const columns = [
   { key: "name", label: "Name" },
   { key: "email", label: "Email" },
-  { key: "role", label: "Role" },
+  { key: "roles", label: "Roles" },
+  { key: "researchCenter", label: "Research Center" },
+  { key: "guide", label: "Guide" },
   { key: "department", label: "Department" },
   { key: "status", label: "Status" },
   { key: "action", label: "Action", align: "right" as const },
@@ -29,39 +53,46 @@ const columns = [
 const roleLabels: Record<string, string> = {
   admin: "Admin",
   coordinator: "Research Center Coordinator",
-  faculty: "Faculty / Guide",
+  faculty: "Faculty",
   scholar: "Scholar",
+  research_guide: "Research Guide",
 };
+
+const roleOptions = [
+  "admin",
+  "coordinator",
+  "faculty",
+  "research_guide",
+  "scholar",
+];
 
 const inputClass =
   "mt-2 w-full rounded-xl border border-[color:var(--border)] bg-white px-3 py-2 text-xs text-slate-700 shadow-sm";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [researchCenters, setResearchCenters] = useState<ResearchCenter[]>([]);
+  const [guides, setGuides] = useState<Guide[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [formState, setFormState] = useState({
     name: "",
     email: "",
-    role: "scholar",
+    roles: ["scholar"],
     department: "",
-    status: "Active",
-    phone: "",
+    researchCenterId: "",
+    guideId: "",
   });
 
   const loadUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiGet<ApiListResponse<User>>("/users");
-      setUsers(response.items);
-    } finally {
-      setLoading(false);
-    }
+    const response = await apiGet<ApiListResponse<User>>("/users");
+    setUsers(response.items);
   }, []);
 
   useEffect(() => {
@@ -69,11 +100,25 @@ export default function AdminUsersPage() {
 
     const load = async () => {
       try {
-        await loadUsers();
+        setLoading(true);
+        setError(null);
+        const [usersRes, centersRes, guidesRes, departmentsRes] = await Promise.all([
+          apiGet<ApiListResponse<User>>("/users"),
+          apiGet<ApiListResponse<ResearchCenter>>("/research-centers"),
+          apiGet<ApiListResponse<Guide>>("/users?role=research_guide"),
+          apiGet<ApiListResponse<Department>>("/departments"),
+        ]);
+        if (!isMounted) return;
+        setUsers(usersRes.items);
+        setResearchCenters(centersRes.items);
+        setGuides(guidesRes.items);
+        setDepartments(departmentsRes.items);
       } catch (err) {
         if (!isMounted) return;
         const message = err instanceof Error ? err.message : "Failed to load users";
         setError(message);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
@@ -91,19 +136,65 @@ export default function AdminUsersPage() {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleRoleToggle = (role: string, checked: boolean) => {
+    setFormState((prev) => {
+      const nextRoles = checked
+        ? Array.from(new Set([...prev.roles, role]))
+        : prev.roles.filter((item) => item !== role);
+      return {
+        ...prev,
+        roles: nextRoles,
+      };
+    });
+  };
+
+  const requiresResearchCenter =
+    formState.roles.includes("scholar") ||
+    formState.roles.includes("research_guide");
+  const requiresGuide = formState.roles.includes("scholar");
+
+  const availableGuides = formState.researchCenterId
+    ? guides.filter(
+        (guide) => guide.researchCenter?._id === formState.researchCenterId
+      )
+    : guides;
+
   const handleCreateUser = async () => {
     try {
       setSaving(true);
       setSaveError(null);
       setSaveSuccess(null);
 
+      const primaryRole = formState.roles[0];
+
+      if (formState.roles.length === 0 || !primaryRole) {
+        setSaveError("Select at least one role for the user.");
+        setSaving(false);
+        return;
+      }
+
+      if (requiresResearchCenter && !formState.researchCenterId) {
+        setSaveError("Research center is required for the selected roles.");
+        setSaving(false);
+        return;
+      }
+
+      if (requiresGuide && !formState.guideId) {
+        setSaveError("Guide is required for scholars.");
+        setSaving(false);
+        return;
+      }
+
       const payload = {
         name: formState.name.trim(),
         email: formState.email.trim(),
-        role: formState.role,
+        role: primaryRole,
+        roles: formState.roles,
         department: formState.department.trim() || undefined,
-        status: formState.status || undefined,
-        phone: formState.phone.trim() || undefined,
+        researchCenterId: requiresResearchCenter
+          ? formState.researchCenterId
+          : undefined,
+        guideId: requiresGuide ? formState.guideId : undefined,
       };
 
       await apiPostJson("/users", payload);
@@ -111,12 +202,18 @@ export default function AdminUsersPage() {
       setFormState({
         name: "",
         email: "",
-        role: "scholar",
+        roles: ["scholar"],
         department: "",
-        status: "Active",
-        phone: "",
+        researchCenterId: "",
+        guideId: "",
       });
       await loadUsers();
+      if (formState.roles.includes("research_guide")) {
+        const guidesRes = await apiGet<ApiListResponse<Guide>>(
+          "/users?role=research_guide"
+        );
+        setGuides(guidesRes.items);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create user";
       setSaveError(message);
@@ -125,25 +222,56 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleDeleteUser = useCallback(async (user: User) => {
+    const confirmed = window.confirm(`Delete user "${user.name}"?`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingUserId(user._id);
+      setError(null);
+      await apiDelete<{ message: string }>(`/users/${user._id}`);
+      await loadUsers();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to delete user";
+      setError(message);
+    } finally {
+      setDeletingUserId(null);
+    }
+  }, [loadUsers]);
+
   const rows = useMemo(
     () =>
       users.map((user) => ({
         id: user._id,
         name: user.name,
         email: user.email,
-        role: roleLabels[user.role] ?? user.role,
+        roles: (user.roles ?? (user.role ? [user.role] : []))
+          .map((role) => roleLabels[role] ?? role)
+          .join(", ") || "N/A",
+        researchCenter: user.researchCenter?.name ?? "N/A",
+        guide: user.guide?.name ?? "N/A",
         department: user.department || "N/A",
         status: <StatusBadge status={user.status ?? "Active"} />,
         action: (
-          <button
-            type="button"
-            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--maroon-700)]"
-          >
-            View
-          </button>
+          <div className="flex justify-end gap-2">
+            <Link
+              href={`/admin/users/details?id=${user._id}`}
+              className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs font-semibold text-[color:var(--maroon-700)]"
+            >
+              View
+            </Link>
+            <button
+              type="button"
+              onClick={() => handleDeleteUser(user)}
+              disabled={deletingUserId === user._id}
+              className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 disabled:opacity-60"
+            >
+              {deletingUserId === user._id ? "Deleting..." : "Delete"}
+            </button>
+          </div>
         ),
       })),
-    [users]
+    [deletingUserId, handleDeleteUser, users]
   );
 
   return (
@@ -205,58 +333,79 @@ export default function AdminUsersPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="user-role">
-                  Role
+                  Roles
                 </label>
-                <select
-                  id="user-role"
-                  className={inputClass}
-                  value={formState.role}
-                  onChange={(event) => handleFormChange("role", event.target.value)}
-                >
-                  <option value="scholar">Scholar</option>
-                  <option value="faculty">Faculty</option>
-                  <option value="coordinator">Research Center Coordinator</option>
-                  <option value="admin">Admin</option>
-                </select>
+                <div className="mt-2 grid gap-2 rounded-xl border border-[color:var(--border)] bg-white p-3 text-xs text-slate-600 shadow-sm">
+                  {roleOptions.map((role) => (
+                    <label key={role} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formState.roles.includes(role)}
+                        onChange={(event) => handleRoleToggle(role, event.target.checked)}
+                      />
+                      <span>{roleLabels[role] ?? role}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="user-department">
                   Department
                 </label>
-                <input
+                <select
                   id="user-department"
                   className={inputClass}
                   value={formState.department}
                   onChange={(event) => handleFormChange("department", event.target.value)}
-                  placeholder="Department name"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="user-status">
-                  Status
-                </label>
-                <select
-                  id="user-status"
-                  className={inputClass}
-                  value={formState.status}
-                  onChange={(event) => handleFormChange("status", event.target.value)}
                 >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="">Select department</option>
+                  {departments.map((department) => (
+                    <option key={department._id} value={department.name}>
+                      {department.name}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="user-phone">
-                  Phone
-                </label>
-                <input
-                  id="user-phone"
-                  className={inputClass}
-                  value={formState.phone}
-                  onChange={(event) => handleFormChange("phone", event.target.value)}
-                  placeholder="Optional"
-                />
-              </div>
+              {requiresResearchCenter ? (
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="user-research-center">
+                    Research center
+                  </label>
+                  <select
+                    id="user-research-center"
+                    className={inputClass}
+                    value={formState.researchCenterId}
+                    onChange={(event) => handleFormChange("researchCenterId", event.target.value)}
+                  >
+                    <option value="">Select research center</option>
+                    {researchCenters.map((center) => (
+                      <option key={center._id} value={center._id}>
+                        {center.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+              {requiresGuide ? (
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor="user-guide">
+                    Research guide
+                  </label>
+                  <select
+                    id="user-guide"
+                    className={inputClass}
+                    value={formState.guideId}
+                    onChange={(event) => handleFormChange("guideId", event.target.value)}
+                  >
+                    <option value="">Select guide</option>
+                    {availableGuides.map((guide) => (
+                      <option key={guide._id} value={guide._id}>
+                        {guide.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
@@ -276,19 +425,6 @@ export default function AdminUsersPage() {
             </div>
           </div>
         ) : null}
-        <div className="mt-4 flex flex-wrap gap-3">
-          <div className="flex flex-1 items-center gap-2 rounded-full border border-[color:var(--border)] bg-white px-4 py-2 text-xs text-slate-500">
-            <Search className="h-4 w-4" />
-            <span>Search users...</span>
-          </div>
-          <select className="rounded-full border border-[color:var(--border)] bg-white px-4 py-2 text-xs font-semibold text-slate-600">
-            <option>All Roles</option>
-            <option>Scholar</option>
-            <option>Faculty</option>
-            <option>Research Center Coordinator</option>
-            <option>Admin</option>
-          </select>
-        </div>
         <div className="mt-4">
           {loading ? (
             <p className="text-sm text-slate-500">Loading users...</p>
